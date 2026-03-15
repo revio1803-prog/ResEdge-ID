@@ -6,45 +6,45 @@ const layout = require("../views/layout");
 const generateIdentifier = require("../utils/idGenerator");
 
 /* ===============================
-BROWSE AUTHORS
+BROWSE DATASETS
 =============================== */
 
-router.get("/browse-authors", async (req,res)=>{
+router.get("/browse-datasets", async (req,res)=>{
 
 try{
 
 const result = await pool.query(
-"SELECT * FROM authors ORDER BY id DESC LIMIT 50"
+"SELECT * FROM datasets ORDER BY id DESC LIMIT 50"
 );
 
 let rows="";
 
-result.rows.forEach(a=>{
+result.rows.forEach(d=>{
 
 rows += `
 <tr>
-<td>${a.id}</td>
-<td>${a.name || ""}</td>
-<td>${a.institution || ""}</td>
-<td>${a.identifier || ""}</td>
+<td>${d.id}</td>
+<td>${d.title || ""}</td>
+<td>${d.year || ""}</td>
+<td>${d.identifier || ""}</td>
 </tr>
 `;
 
 });
 
 res.send(layout(
-"Authors",
+"Datasets",
 `
-<h2>Registered Authors</h2>
+<h2>Registered Datasets</h2>
 
-<a class="btn" href="/create-author">Create Author</a>
+<a class="btn" href="/create-dataset">Create Dataset</a>
 
 <table>
 
 <tr>
 <th>ID</th>
-<th>Name</th>
-<th>Institution</th>
+<th>Title</th>
+<th>Year</th>
 <th>Identifier</th>
 </tr>
 
@@ -64,25 +64,25 @@ res.status(500).send("Server Error");
 });
 
 /* ===============================
-CREATE AUTHOR FORM
+CREATE DATASET FORM
 =============================== */
 
-router.get("/create-author",(req,res)=>{
+router.get("/create-dataset",(req,res)=>{
 
 res.send(layout(
-"Create Author",
+"Create Dataset",
 `
-<h2>Create Author</h2>
+<h2>Create Dataset</h2>
 
-<form method="POST" action="/create-author">
+<form method="POST" action="/create-dataset">
 
-<label>Name</label>
-<input name="name" required>
+<label>Title</label>
+<input name="title" required>
 
-<label>Institution</label>
-<input name="institution">
+<label>Year</label>
+<input name="year">
 
-<button class="btn">Create Author</button>
+<button class="btn">Create Dataset</button>
 
 </form>
 `
@@ -91,30 +91,30 @@ res.send(layout(
 });
 
 /* ===============================
-CREATE AUTHOR POST
+CREATE DATASET POST
 =============================== */
 
-router.post("/create-author", async (req,res)=>{
+router.post("/create-dataset", async (req,res)=>{
 
 try{
 
-const {name,institution} = req.body;
+const {title,year} = req.body;
 
 const insert = await pool.query(
-"INSERT INTO authors(name,institution) VALUES($1,$2) RETURNING id",
-[name,institution]
+"INSERT INTO datasets(title,year) VALUES($1,$2) RETURNING id",
+[title,year]
 );
 
 const id = insert.rows[0].id;
 
-const identifier = generateIdentifier("author",id);
+const identifier = generateIdentifier("dataset",id);
 
 await pool.query(
-"UPDATE authors SET identifier=$1 WHERE id=$2",
+"UPDATE datasets SET identifier=$1 WHERE id=$2",
 [identifier,id]
 );
 
-res.redirect("/browse-authors");
+res.redirect("/browse-datasets");
 
 }catch(err){
 
