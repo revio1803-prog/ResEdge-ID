@@ -19,9 +19,7 @@ router.get("/id/:identifier", async (req, res) => {
 
     }
 
-    const data = result.rows[0];
-
-    res.json(data);
+    res.json(result.rows[0]);
 
   } catch (err) {
 
