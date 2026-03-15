@@ -46,7 +46,7 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 `);
 
-console.log("Database tables ready");
+console.log("Database ready");
 
 }catch(err){
 
