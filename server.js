@@ -3,6 +3,10 @@ require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 
+/* DATABASE */
+
+const pool = require("./src/config/db");
+
 /* ROUTES */
 
 const authorsRoutes = require("./src/routes/authors");
@@ -24,7 +28,7 @@ MIDDLEWARE
 ================================ */
 
 app.use(express.json());
-app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({ extended: true }));
 
 app.use(morgan("dev"));
 
@@ -44,7 +48,7 @@ app.use("/", apiRoutes);
 HOME PAGE
 ================================ */
 
-app.get("/", (req,res)=>{
+app.get("/", (req, res) => {
 
 res.send(layout(
 "Research Edge Identifier",
@@ -60,17 +64,44 @@ datasets and research publications.
 <br>
 
 <a class="btn" href="/browse-authors">Browse Authors</a>
-
 <a class="btn" href="/browse-datasets">Browse Datasets</a>
 
 <br><br>
 
 <a class="btn" href="/create-author">Create Author</a>
-
 <a class="btn" href="/create-dataset">Create Dataset</a>
 
 `
-))
+));
+
+});
+
+/* ================================
+DATABASE UPDATE ROUTE (PHASE-2)
+================================ */
+
+app.get("/update-db", async (req, res) => {
+
+try {
+
+await pool.query(`
+ALTER TABLE identifiers
+ADD COLUMN IF NOT EXISTS prefix TEXT DEFAULT '10.1001'
+`);
+
+await pool.query(`
+ALTER TABLE identifiers
+ADD COLUMN IF NOT EXISTS number INTEGER DEFAULT 0
+`);
+
+res.send("Database updated successfully");
+
+} catch (err) {
+
+console.error(err);
+res.send("Database update failed");
+
+}
 
 });
 
@@ -87,7 +118,7 @@ SERVER START
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, ()=>{
+app.listen(PORT, () => {
 
 console.log("Server running on port " + PORT);
 
