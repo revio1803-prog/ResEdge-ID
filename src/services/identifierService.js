@@ -1,14 +1,27 @@
-const generateId = require("../utils/idGenerator");
+const pool = require("../config/db");
 
-function createIdentifier(type, number) {
+async function generateIdentifier(type){
 
-  let prefix = "RES";
+let prefix = "10.1001";
+let code = "";
 
-  if (type === "author") prefix = "AUTH";
-  if (type === "dataset") prefix = "DATA";
-  if (type === "paper") prefix = "PAPR";
+if(type === "author") code = "AUTH";
+if(type === "dataset") code = "DATA";
+if(type === "paper") code = "PAPR";
 
-  return generateId(prefix, number);
+const result = await pool.query(
+`SELECT COUNT(*) FROM identifiers WHERE type=$1`,
+[type]
+);
+
+let number = parseInt(result.rows[0].count) + 1;
+
+let numberStr = String(number).padStart(5,"0");
+
+let identifier = `${prefix}/${code}${numberStr}`;
+
+return identifier;
+
 }
 
-module.exports = createIdentifier;
+module.exports = generateIdentifier;
