@@ -36,7 +36,11 @@ rows += `
 <td>${a.id}</td>
 <td>${a.name || ""}</td>
 <td>${a.institution || ""}</td>
-<td>${a.identifier || ""}</td>
+<td>
+<a href="/author/${a.identifier}">
+${a.identifier || ""}
+</a>
+</td>
 </tr>
 `;
 
@@ -69,6 +73,79 @@ ${rows}
 }catch(err){
 
 console.error("Browse authors error:",err);
+res.status(500).send("Server Error");
+
+}
+
+});
+
+
+/* ===============================
+AUTHOR PROFILE PAGE
+=============================== */
+
+router.get("/author/:identifier", async (req,res)=>{
+
+try{
+
+const {identifier} = req.params;
+
+const result = await pool.query(
+"SELECT * FROM authors WHERE identifier=$1",
+[identifier]
+);
+
+if(result.rows.length === 0){
+
+return res.send(layout(
+"Author",
+`
+<h2>Author Not Found</h2>
+
+<p>No author exists with identifier <b>${identifier}</b></p>
+`
+));
+
+}
+
+const a = result.rows[0];
+
+res.send(layout(
+"Author "+a.name,
+`
+
+<h2>Author Profile</h2>
+
+<table>
+
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+
+<tr>
+<td>Name</td>
+<td>${a.name}</td>
+</tr>
+
+<tr>
+<td>Institution</td>
+<td>${a.institution || ""}</td>
+</tr>
+
+<tr>
+<td>Identifier</td>
+<td>${a.identifier}</td>
+</tr>
+
+</table>
+
+`
+));
+
+}catch(err){
+
+console.error(err);
 res.status(500).send("Server Error");
 
 }
@@ -129,9 +206,23 @@ const id = insert.rows[0].id;
 
 const identifier = generateIdentifier("author",id);
 
+/* update author */
+
 await pool.query(
 "UPDATE authors SET identifier=$1 WHERE id=$2",
 [identifier,id]
+);
+
+/* store identifier record */
+
+await pool.query(
+`INSERT INTO identifiers(identifier,type,target_url)
+VALUES($1,$2,$3)`,
+[
+identifier,
+"author",
+"/author/"+identifier
+]
 );
 
 res.redirect("/browse-authors");
