@@ -3,6 +3,11 @@ const router = express.Router();
 
 const pool = require("../config/db");
 const layout = require("../views/layout");
+const generateIdentifier = require("../utils/idGenerator");
+
+/* ===============================
+BROWSE AUTHORS
+=============================== */
 
 router.get("/browse-authors", async (req,res)=>{
 
@@ -12,7 +17,7 @@ const result = await pool.query(
 "SELECT * FROM authors ORDER BY id DESC LIMIT 50"
 );
 
-let rows = "";
+let rows="";
 
 result.rows.forEach(a=>{
 
@@ -32,6 +37,8 @@ res.send(layout(
 `
 <h2>Registered Authors</h2>
 
+<a class="btn" href="/create-author">Create Author</a>
+
 <table>
 
 <tr>
@@ -45,18 +52,20 @@ ${rows}
 
 </table>
 `
-))
+));
 
 }catch(err){
 
-console.error(err)
-res.status(500).send("Server Error")
+console.error(err);
+res.status(500).send("Server Error");
 
 }
 
-})
+});
 
-module.exports = router
+/* ===============================
+CREATE AUTHOR FORM
+=============================== */
 
 router.get("/create-author",(req,res)=>{
 
@@ -67,17 +76,25 @@ res.send(layout(
 
 <form method="POST" action="/create-author">
 
-<label>Name</label><br>
-<input name="name" required><br><br>
+<label>Name</label>
+<input name="name" required>
 
-<label>Institution</label><br>
-<input name="institution"><br><br>
+<label>Institution</label>
+<input name="institution">
 
 <button class="btn">Create Author</button>
 
-const generateIdentifier = require("../utils/idGenerator");
+</form>
+`
+));
 
-router.post("/create-author",async(req,res)=>{
+});
+
+/* ===============================
+CREATE AUTHOR POST
+=============================== */
+
+router.post("/create-author", async (req,res)=>{
 
 try{
 
@@ -101,15 +118,11 @@ res.redirect("/browse-authors");
 
 }catch(err){
 
-console.error(err)
-res.status(500).send("Server Error")
+console.error(err);
+res.status(500).send("Server Error");
 
 }
 
-})
+});
 
-</form>
-`
-))
-
-})
+module.exports = router;
