@@ -3,9 +3,14 @@ require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 
+/* ROUTES */
+
 const authorsRoutes = require("./src/routes/authors");
 const datasetsRoutes = require("./src/routes/datasets");
 const identifiersRoutes = require("./src/routes/identifiers");
+const apiRoutes = require("./src/routes/api");
+
+/* MIDDLEWARE */
 
 const errorHandler = require("./src/middleware/errorHandler");
 const notFound = require("./src/middleware/notFound");
@@ -15,27 +20,31 @@ const layout = require("./src/views/layout");
 const app = express();
 
 /* ================================
-Middleware
+MIDDLEWARE
 ================================ */
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({extended:true}));
 
 app.use(morgan("dev"));
 
 /* ================================
-Routes
+ROUTES
 ================================ */
 
 app.use("/", authorsRoutes);
 app.use("/", datasetsRoutes);
 app.use("/", identifiersRoutes);
 
+/* API ROUTES */
+
+app.use("/", apiRoutes);
+
 /* ================================
-Home Page
+HOME PAGE
 ================================ */
 
-app.get("/", (req, res) => {
+app.get("/", (req,res)=>{
 
 res.send(layout(
 "Research Edge Identifier",
@@ -61,24 +70,24 @@ datasets and research publications.
 <a class="btn" href="/create-dataset">Create Dataset</a>
 
 `
-));
+))
 
 });
 
 /* ================================
-Error Handling
+ERROR HANDLING
 ================================ */
 
 app.use(notFound);
 app.use(errorHandler);
 
 /* ================================
-Server Start
+SERVER START
 ================================ */
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, ()=>{
 
 console.log("Server running on port " + PORT);
 
