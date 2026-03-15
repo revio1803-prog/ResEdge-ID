@@ -3,6 +3,11 @@ const router = express.Router();
 
 const pool = require("../config/db");
 const layout = require("../views/layout");
+const generateIdentifier = require("../utils/idGenerator");
+
+/* ===============================
+BROWSE DATASETS
+=============================== */
 
 router.get("/browse-datasets", async (req,res)=>{
 
@@ -13,6 +18,16 @@ const result = await pool.query(
 );
 
 let rows = "";
+
+if(result.rows.length === 0){
+
+rows = `
+<tr>
+<td colspan="4">No datasets registered yet</td>
+</tr>
+`;
+
+}else{
 
 result.rows.forEach(d=>{
 
@@ -27,10 +42,14 @@ rows += `
 
 });
 
+}
+
 res.send(layout(
 "Datasets",
 `
 <h2>Registered Datasets</h2>
+
+<a class="btn" href="/create-dataset">Create Dataset</a>
 
 <table>
 
@@ -45,18 +64,21 @@ ${rows}
 
 </table>
 `
-))
+));
 
 }catch(err){
 
-console.error(err)
-res.status(500).send("Server Error")
+console.error("Browse datasets error:",err);
+res.status(500).send("Server Error");
 
 }
 
-})
+});
 
-module.exports = router
+
+/* ===============================
+CREATE DATASET FORM
+=============================== */
 
 router.get("/create-dataset",(req,res)=>{
 
@@ -67,27 +89,36 @@ res.send(layout(
 
 <form method="POST" action="/create-dataset">
 
-<label>Title</label><br>
-<input name="title" required><br><br>
+<label>Title</label>
+<input name="title" required>
 
-<label>Year</label><br>
-<input name="year"><br><br>
+<label>Year</label>
+<input name="year">
+
+<br>
 
 <button class="btn">Create Dataset</button>
 
 </form>
 `
-))
+));
 
-})
+});
 
-const generateIdentifier = require("../utils/idGenerator");
+
+/* ===============================
+CREATE DATASET POST
+=============================== */
 
 router.post("/create-dataset",async(req,res)=>{
 
 try{
 
 const {title,year} = req.body;
+
+if(!title){
+return res.status(400).send("Title is required");
+}
 
 const insert = await pool.query(
 "INSERT INTO datasets(title,year) VALUES($1,$2) RETURNING id",
@@ -107,9 +138,12 @@ res.redirect("/browse-datasets");
 
 }catch(err){
 
-console.error(err)
-res.status(500).send("Server Error")
+console.error("Create dataset error:",err);
+res.status(500).send("Server Error");
 
 }
 
-})
+});
+
+
+module.exports = router;
