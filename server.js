@@ -10,6 +10,8 @@ const identifiersRoutes = require("./src/routes/identifiers");
 const errorHandler = require("./src/middleware/errorHandler");
 const notFound = require("./src/middleware/notFound");
 
+const layout = require("./src/views/layout");
+
 const app = express();
 
 app.use(express.json());
@@ -19,15 +21,33 @@ app.use("/", authorsRoutes);
 app.use("/", datasetsRoutes);
 app.use("/", identifiersRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Research Edge Identifier Server Running");
-});
+app.get("/", (req,res)=>{
+
+res.send(layout(
+"Research Edge Identifier",
+`
+<h2>Research Edge Identifier Registry</h2>
+
+<p>
+This platform provides persistent identifiers for research authors,
+datasets and research publications.
+</p>
+
+<a class="btn" href="/browse-authors">Browse Authors</a>
+<a class="btn" href="/browse-datasets">Browse Datasets</a>
+
+`
+))
+
+})
 
 app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
+app.listen(PORT,()=>{
+
+console.log("Server running on port "+PORT)
+
+})
