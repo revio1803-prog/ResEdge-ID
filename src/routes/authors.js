@@ -57,3 +57,26 @@ res.status(500).send("Server Error")
 })
 
 module.exports = router
+
+router.get("/create-author",(req,res)=>{
+
+res.send(layout(
+"Create Author",
+`
+<h2>Create Author</h2>
+
+<form method="POST" action="/create-author">
+
+<label>Name</label><br>
+<input name="name" required><br><br>
+
+<label>Institution</label><br>
+<input name="institution"><br><br>
+
+<button class="btn">Create Author</button>
+
+</form>
+`
+))
+
+})
