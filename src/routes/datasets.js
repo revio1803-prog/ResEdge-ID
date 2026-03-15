@@ -1,24 +1,59 @@
 const express = require("express");
 const router = express.Router();
+
 const pool = require("../config/db");
+const layout = require("../views/layout");
 
-router.get("/browse-datasets", async (req, res) => {
+router.get("/browse-datasets", async (req,res)=>{
 
-  try {
+try{
 
-    const result = await pool.query(
-      "SELECT * FROM datasets ORDER BY id DESC LIMIT 50"
-    );
+const result = await pool.query(
+"SELECT * FROM datasets ORDER BY id DESC LIMIT 50"
+);
 
-    res.json(result.rows);
+let rows = "";
 
-  } catch (err) {
+result.rows.forEach(d=>{
 
-    console.error(err);
-    res.status(500).send("Server error");
-
-  }
+rows += `
+<tr>
+<td>${d.id}</td>
+<td>${d.title || ""}</td>
+<td>${d.year || ""}</td>
+<td>${d.identifier || ""}</td>
+</tr>
+`;
 
 });
 
-module.exports = router;
+res.send(layout(
+"Datasets",
+`
+<h2>Registered Datasets</h2>
+
+<table>
+
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>Year</th>
+<th>Identifier</th>
+</tr>
+
+${rows}
+
+</table>
+`
+))
+
+}catch(err){
+
+console.error(err)
+res.status(500).send("Server Error")
+
+}
+
+})
+
+module.exports = router
