@@ -5,16 +5,16 @@ const pool = require("../config/db");
 const layout = require("../views/layout");
 
 /* ===============================
-IDENTIFIER RESOLVER
+IDENTIFIER LANDING PAGE
 =============================== */
 
 router.get("/id/:identifier", async (req,res)=>{
 
 try{
 
-const {identifier} = req.params;
+let {identifier} = req.params;
 
-/* find identifier */
+identifier = identifier.trim().toUpperCase();
 
 const result = await pool.query(
 "SELECT * FROM identifiers WHERE identifier=$1",
@@ -40,18 +40,40 @@ The requested identifier <b>${identifier}</b> does not exist in this registry.
 
 const data = result.rows[0];
 
-/* page content */
-
 res.send(layout(
 "Identifier "+identifier,
 `
-<h2>Identifier Record</h2>
 
-<p><b>Identifier:</b> ${data.identifier}</p>
+<h2>Identifier Landing Page</h2>
 
-<p><b>Type:</b> ${data.type}</p>
+<table>
 
-<p><b>Target URL:</b> ${data.target_url || "Not available"}</p>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+
+<tr>
+<td>Identifier</td>
+<td>${data.identifier}</td>
+</tr>
+
+<tr>
+<td>Type</td>
+<td>${data.type}</td>
+</tr>
+
+<tr>
+<td>Target Resource</td>
+<td>${data.target_url || ""}</td>
+</tr>
+
+<tr>
+<td>Created</td>
+<td>${data.created_at || ""}</td>
+</tr>
+
+</table>
 
 <br>
 
@@ -74,15 +96,18 @@ res.status(500).send("Server Error");
 
 });
 
+
 /* ===============================
 IDENTIFIER METADATA API
 =============================== */
 
-router.get("/identifier/:identifier", async (req,res)=>{
+router.get("/api/identifier/:identifier", async (req,res)=>{
 
 try{
 
-const {identifier} = req.params;
+let {identifier} = req.params;
+
+identifier = identifier.trim().toUpperCase();
 
 const result = await pool.query(
 "SELECT * FROM identifiers WHERE identifier=$1",
@@ -97,15 +122,27 @@ error:"Identifier not found"
 
 }
 
-res.json(result.rows[0]);
+const data = result.rows[0];
+
+res.json({
+identifier: data.identifier,
+type: data.type,
+target_url: data.target_url,
+metadata: data.metadata || {},
+created_at: data.created_at
+});
 
 }catch(err){
 
 console.error(err);
-res.status(500).json({error:"Server error"});
+
+res.status(500).json({
+error:"Server error"
+});
 
 }
 
 });
+
 
 module.exports = router;
