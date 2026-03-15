@@ -75,6 +75,39 @@ res.send(layout(
 
 <button class="btn">Create Author</button>
 
+const generateIdentifier = require("../utils/idGenerator");
+
+router.post("/create-author",async(req,res)=>{
+
+try{
+
+const {name,institution} = req.body;
+
+const insert = await pool.query(
+"INSERT INTO authors(name,institution) VALUES($1,$2) RETURNING id",
+[name,institution]
+);
+
+const id = insert.rows[0].id;
+
+const identifier = generateIdentifier("author",id);
+
+await pool.query(
+"UPDATE authors SET identifier=$1 WHERE id=$2",
+[identifier,id]
+);
+
+res.redirect("/browse-authors");
+
+}catch(err){
+
+console.error(err)
+res.status(500).send("Server Error")
+
+}
+
+})
+
 </form>
 `
 ))
