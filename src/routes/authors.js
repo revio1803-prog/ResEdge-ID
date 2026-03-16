@@ -5,13 +5,15 @@ const pool = require("../config/db");
 const layout = require("../views/layout");
 const generateIdentifier = require("../utils/idGenerator");
 
-/* ---------- CREATE AUTHOR PAGE ---------- */
+/* =========================
+CREATE AUTHOR PAGE
+========================= */
 
-router.get("/create-author", (req,res)=>{
+router.get("/create-author",(req,res)=>{
 
 res.send(layout("Create Author",`
 
-<h2>Create Author Profile</h2>
+<h2>Create Author</h2>
 
 <form method="POST" action="/create-author">
 
@@ -19,7 +21,7 @@ Name
 <input name="name" required>
 
 Institution
-<input name="institution" required>
+<input name="institution">
 
 <button>Create Author Identifier</button>
 
@@ -29,7 +31,9 @@ Institution
 
 });
 
-/* ---------- CREATE AUTHOR ---------- */
+/* =========================
+CREATE AUTHOR
+========================= */
 
 router.post("/create-author", async (req,res)=>{
 
@@ -79,18 +83,25 @@ res.send(layout("Author Created",`
 }catch(err){
 
 console.error(err);
-res.send("Error creating author");
+res.send(layout("Error",`
+<h2>Error creating author</h2>
+<p>${err.message}</p>
+`));
 
 }
 
 });
 
-/* ---------- BROWSE AUTHORS ---------- */
+/* =========================
+BROWSE AUTHORS
+========================= */
 
 router.get("/browse-authors", async (req,res)=>{
 
+try{
+
 const result = await pool.query(
-"SELECT * FROM authors ORDER BY identifier DESC"
+`SELECT * FROM authors ORDER BY created_at DESC`
 );
 
 let rows="";
@@ -101,7 +112,7 @@ rows += `
 <tr>
 <td>${a.identifier}</td>
 <td>${a.name}</td>
-<td>${a.institution}</td>
+<td>${a.institution || ""}</td>
 <td><a href="/author/${a.identifier}">Profile</a></td>
 </tr>
 `;
@@ -127,24 +138,35 @@ ${rows}
 
 `));
 
+}catch(err){
+
+console.error(err);
+res.send(err.message);
+
+}
+
 });
 
-/* ---------- AUTHOR PROFILE ---------- */
+/* =========================
+AUTHOR PROFILE
+========================= */
 
 router.get("/author/:identifier", async (req,res)=>{
 
-const identifier = req.params.identifier;
+try{
 
-const author = await pool.query(
-"SELECT * FROM authors WHERE identifier=$1",
+const {identifier} = req.params;
+
+const result = await pool.query(
+`SELECT * FROM authors WHERE identifier=$1`,
 [identifier]
 );
 
-if(author.rows.length === 0){
+if(result.rows.length === 0){
 return res.send(layout("Not Found","Author not found"));
 }
 
-const a = author.rows[0];
+const a = result.rows[0];
 
 res.send(layout("Author Profile",`
 
@@ -152,9 +174,16 @@ res.send(layout("Author Profile",`
 
 <p><b>Identifier:</b> ${a.identifier}</p>
 
-<p><b>Institution:</b> ${a.institution}</p>
+<p><b>Institution:</b> ${a.institution || ""}</p>
 
 `));
+
+}catch(err){
+
+console.error(err);
+res.send(err.message);
+
+}
 
 });
 
