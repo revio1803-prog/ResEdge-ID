@@ -129,16 +129,18 @@ Browse Papers
 
 }catch(err){
 
-console.error(err);
+console.error("Paper create error:", err);
 
 res.send(layout(
 "Error",
-`Paper registration failed`
+`
+<h2>Paper registration failed</h2>
+
+<p>${err.message}</p>
+`
 ));
 
-}
-
-});
+};
 
 
 /* ===============================
