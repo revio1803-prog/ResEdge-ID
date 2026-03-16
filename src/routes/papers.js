@@ -7,36 +7,63 @@ const identifierService = require("../services/identifierService");
 
 const layout = require("../views/layout");
 
-/* CREATE PAPER PAGE */
+/* ===============================
+HELPER
+=============================== */
+
+function escapeHTML(str){
+return String(str || "")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;");
+}
+
+/* ===============================
+CREATE PAPER PAGE
+=============================== */
 
 router.get("/create-paper",(req,res)=>{
 
-res.send(layout(`
-<h2>Create Paper</h2>
+res.send(layout(
+"Create Paper",
+`
+
+<h2>Register Research Paper</h2>
 
 <form method="POST" action="/create-paper">
 
-<input name="title" placeholder="Title" required><br><br>
+<label>Title</label><br>
+<input name="title" required style="width:400px"><br><br>
 
-<input name="authors" placeholder="Authors" required><br><br>
+<label>Authors</label><br>
+<input name="authors" required style="width:400px"><br><br>
 
-<input name="journal" placeholder="Journal"><br><br>
+<label>Journal</label><br>
+<input name="journal" style="width:300px"><br><br>
 
-<input name="year" placeholder="Year"><br><br>
+<label>Year</label><br>
+<input name="year" style="width:120px"><br><br>
 
-<input name="doi" placeholder="DOI"><br><br>
+<label>DOI</label><br>
+<input name="doi" style="width:400px"><br><br>
 
-<input name="url" placeholder="URL"><br><br>
+<label>URL</label><br>
+<input name="url" style="width:400px"><br><br>
 
-<button type="submit">Register Paper</button>
+<button class="btn">Register Paper</button>
 
 </form>
-`));
+
+`
+));
 
 });
 
 
-/* CREATE PAPER */
+/* ===============================
+CREATE PAPER
+=============================== */
 
 router.post("/create-paper", async (req,res)=>{
 
@@ -44,43 +71,74 @@ try{
 
 const {title,authors,journal,year,doi,url} = req.body;
 
+/* VALIDATION */
+
+if(!title || !authors){
+
+return res.send(layout("Error","Title and Authors required"));
+
+}
+
+/* GENERATE IDENTIFIER */
+
 const identifier = await generateIdentifier("PAPR");
 
-/* save paper */
+/* INSERT PAPER */
 
 await pool.query(
+
 `INSERT INTO papers
 (title,authors,journal,year,doi,url,identifier)
 VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+
 [title,authors,journal,year,doi,url,identifier]
+
 );
 
-/* identifier registry entry */
+/* REGISTER IDENTIFIER */
 
 await identifierService.register(identifier,"PAPR");
 
-/* success page */
+/* SUCCESS */
 
-res.send(layout(`
-<h2>Paper Registered</h2>
+res.send(layout(
+"Paper Registered",
+`
+
+<h2>Paper Registered Successfully</h2>
 
 <p><b>Identifier:</b> ${identifier}</p>
 
-<a href="/paper/${identifier}">View Paper</a>
+<a class="btn" href="/paper/${identifier}">
+View Paper
+</a>
 
-`));
+<br><br>
+
+<a href="/browse-papers">
+Browse Papers
+</a>
+
+`
+));
 
 }catch(err){
 
 console.error(err);
-res.send("Error creating paper");
+
+res.send(layout(
+"Error",
+`Paper registration failed`
+));
 
 }
 
 });
 
 
-/* PAPER PROFILE */
+/* ===============================
+PAPER PROFILE
+=============================== */
 
 router.get("/paper/:identifier", async (req,res)=>{
 
@@ -89,50 +147,74 @@ try{
 const {identifier} = req.params;
 
 const result = await pool.query(
+
 "SELECT * FROM papers WHERE identifier=$1",
 [identifier]
+
 );
 
 if(result.rows.length===0){
 
-return res.send("Paper not found");
+return res.send(layout("Not Found","Paper not found"));
 
 }
 
 const p = result.rows[0];
 
-res.send(layout(`
+res.send(layout(
+p.title,
+`
 
-<h2>${p.title}</h2>
+<h2>${escapeHTML(p.title)}</h2>
 
-<p><b>Authors:</b> ${p.authors}</p>
+<p><b>Authors:</b> ${escapeHTML(p.authors)}</p>
 
-<p><b>Journal:</b> ${p.journal}</p>
+<p><b>Journal:</b> ${escapeHTML(p.journal)}</p>
 
-<p><b>Year:</b> ${p.year}</p>
+<p><b>Year:</b> ${escapeHTML(p.year)}</p>
 
-<p><b>Identifier:</b> ${p.identifier}</p>
+<p><b>Identifier:</b> ${escapeHTML(p.identifier)}</p>
 
-<p><b>DOI:</b> <a href="${p.doi}">${p.doi}</a></p>
+<p>
+<b>DOI:</b>
+<a href="${escapeHTML(p.doi)}" target="_blank">
+${escapeHTML(p.doi)}
+</a>
+</p>
 
-`));
+<p>
+<b>URL:</b>
+<a href="${escapeHTML(p.url)}" target="_blank">
+${escapeHTML(p.url)}
+</a>
+</p>
+
+`
+));
 
 }catch(err){
 
 console.error(err);
-res.send("Error");
+
+res.send(layout("Error","Unable to load paper"));
 
 }
 
 });
 
 
-/* BROWSE PAPERS */
+/* ===============================
+BROWSE PAPERS
+=============================== */
 
 router.get("/browse-papers", async (req,res)=>{
 
+try{
+
 const result = await pool.query(
-"SELECT * FROM papers ORDER BY id DESC LIMIT 50"
+
+"SELECT * FROM papers ORDER BY id DESC LIMIT 100"
+
 );
 
 let rows="";
@@ -140,22 +222,36 @@ let rows="";
 result.rows.forEach(p=>{
 
 rows += `
+
 <tr>
-<td>${p.identifier}</td>
-<td>${p.title}</td>
-<td>${p.journal}</td>
-<td>${p.year}</td>
-<td><a href="/paper/${p.identifier}">View</a></td>
+
+<td>${escapeHTML(p.identifier)}</td>
+
+<td>${escapeHTML(p.title)}</td>
+
+<td>${escapeHTML(p.journal)}</td>
+
+<td>${escapeHTML(p.year)}</td>
+
+<td>
+<a href="/paper/${p.identifier}">
+View
+</a>
+</td>
+
 </tr>
+
 `;
 
 });
 
-res.send(layout(`
+res.send(layout(
+"Browse Papers",
+`
 
-<h2>Browse Papers</h2>
+<h2>Research Papers</h2>
 
-<table border="1">
+<table border="1" cellpadding="8">
 
 <tr>
 <th>Identifier</th>
@@ -169,8 +265,18 @@ ${rows}
 
 </table>
 
-`));
+`
+));
+
+}catch(err){
+
+console.error(err);
+
+res.send(layout("Error","Unable to load papers"));
+
+}
 
 });
+
 
 module.exports = router;
