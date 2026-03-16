@@ -5,9 +5,7 @@ const pool = require("../config/db");
 const layout = require("../views/layout");
 const generateIdentifier = require("../utils/idGenerator");
 
-/* =========================
-CREATE AUTHOR PAGE
-========================= */
+/* CREATE AUTHOR PAGE */
 
 router.get("/create-author",(req,res)=>{
 
@@ -31,9 +29,8 @@ Institution
 
 });
 
-/* =========================
-CREATE AUTHOR
-========================= */
+
+/* CREATE AUTHOR */
 
 router.post("/create-author", async (req,res)=>{
 
@@ -44,15 +41,11 @@ const institution = req.body.institution || "";
 
 const id = await generateIdentifier("author");
 
-/* insert author */
-
 await pool.query(
 `INSERT INTO authors (identifier,name,institution)
 VALUES ($1,$2,$3)`,
 [id.identifier,name,institution]
 );
-
-/* register identifier */
 
 await pool.query(
 `INSERT INTO identifiers
@@ -78,9 +71,47 @@ res.send(err.message);
 
 });
 
-/* =========================
-BROWSE AUTHORS
-========================= */
+
+/* AUTHOR PROFILE */
+
+router.get("/author/:identifier", async (req,res)=>{
+
+try{
+
+const identifier = req.params.identifier;
+
+const result = await pool.query(
+`SELECT * FROM authors WHERE identifier=$1`,
+[identifier]
+);
+
+if(result.rows.length===0){
+return res.send("Author not found");
+}
+
+const a = result.rows[0];
+
+res.send(layout("Author Profile",`
+
+<h2>${a.name}</h2>
+
+<p><b>Identifier:</b> ${a.identifier}</p>
+
+<p><b>Institution:</b> ${a.institution || ""}</p>
+
+`));
+
+}catch(err){
+
+console.error(err);
+res.send(err.message);
+
+}
+
+});
+
+
+/* BROWSE AUTHORS */
 
 router.get("/browse-authors", async (req,res)=>{
 
@@ -124,44 +155,5 @@ ${rows}
 
 });
 
-/* =========================
-AUTHOR PROFILE
-========================= */
-
-router.get("/author/:identifier", async (req,res)=>{
-
-try{
-
-const {identifier} = req.params;
-
-const result = await pool.query(
-`SELECT * FROM authors WHERE identifier=$1`,
-[identifier]
-);
-
-if(result.rows.length===0){
-return res.send("Author not found");
-}
-
-const a = result.rows[0];
-
-res.send(layout("Author Profile",`
-
-<h2>${a.name}</h2>
-
-<p><b>Identifier:</b> ${a.identifier}</p>
-
-<p><b>Institution:</b> ${a.institution || ""}</p>
-
-`));
-
-}catch(err){
-
-console.error(err);
-res.send(err.message);
-
-}
-
-});
 
 module.exports = router;
