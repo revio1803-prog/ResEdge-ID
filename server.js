@@ -44,6 +44,25 @@ app.use("/", identifiersRoutes);
 
 app.use("/", apiRoutes);
 
+/* DEBUG ROUTE */
+
+app.get("/debug-authors", async (req,res)=>{
+
+try{
+
+const result = await pool.query("SELECT * FROM authors");
+
+res.json(result.rows);
+
+}catch(err){
+
+console.error(err);
+res.send(err.message);
+
+}
+
+});
+
 /* ================================
 HOME PAGE
 ================================ */
