@@ -16,7 +16,7 @@ return res.send(layout(
 <h2>Search</h2>
 
 <form>
-<input name="q" placeholder="Search authors or datasets">
+<input name="q" placeholder="Search authors, datasets or papers">
 <button class="btn">Search</button>
 </form>
 `
@@ -26,17 +26,34 @@ return res.send(layout(
 
 try{
 
+/* AUTHORS */
+
 const authors = await pool.query(
-"SELECT * FROM authors WHERE name ILIKE $1",
+"SELECT * FROM authors WHERE name ILIKE $1 LIMIT 20",
 ["%"+q+"%"]
 );
 
+/* DATASETS */
+
 const datasets = await pool.query(
-"SELECT * FROM datasets WHERE title ILIKE $1",
+"SELECT * FROM datasets WHERE title ILIKE $1 LIMIT 20",
+["%"+q+"%"]
+);
+
+/* PAPERS */
+
+const papers = await pool.query(
+"SELECT * FROM papers WHERE title ILIKE $1 LIMIT 20",
 ["%"+q+"%"]
 );
 
 let results="";
+
+/* AUTHORS RESULTS */
+
+if(authors.rows.length){
+
+results += `<h3>Authors</h3>`;
 
 authors.rows.forEach(a=>{
 
@@ -50,6 +67,14 @@ ${a.name}
 
 });
 
+}
+
+/* DATASETS RESULTS */
+
+if(datasets.rows.length){
+
+results += `<h3>Datasets</h3>`;
+
 datasets.rows.forEach(d=>{
 
 results += `
@@ -61,6 +86,28 @@ ${d.title}
 `;
 
 });
+
+}
+
+/* PAPERS RESULTS */
+
+if(papers.rows.length){
+
+results += `<h3>Papers</h3>`;
+
+papers.rows.forEach(p=>{
+
+results += `
+<p>
+Paper: <a href="/paper/${p.identifier}">
+${p.title}
+</a>
+</p>
+`;
+
+});
+
+}
 
 res.send(layout(
 "Search",
@@ -75,6 +122,7 @@ res.send(layout(
 <br>
 
 ${results || "No results found"}
+
 `
 ))
 
