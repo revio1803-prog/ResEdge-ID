@@ -9,7 +9,7 @@ const prefix = "10.1001";
 const types = {
 AUTH: "AUTH",
 DATA: "DATA",
-PAPR: "PAPR"
+paper: "paper"
 };
 
 if(!types[type]){
