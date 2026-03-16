@@ -29,22 +29,23 @@ MIDDLEWARE
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(morgan("dev"));
 
 /* ================================
-ROUTES
+ROUTES (IMPORTANT ORDER)
 ================================ */
 
 app.use("/", authorsRoutes);
 app.use("/", datasetsRoutes);
-app.use("/", identifiersRoutes);
-
-/* API ROUTES */
-
 app.use("/", apiRoutes);
 
-/* DEBUG ROUTE */
+/* identifier resolver last */
+
+app.use("/", identifiersRoutes);
+
+/* ================================
+DEBUG ROUTES
+================================ */
 
 app.get("/debug-authors", async (req,res)=>{
 
@@ -53,6 +54,35 @@ try{
 const result = await pool.query("SELECT * FROM authors");
 
 res.json(result.rows);
+
+}catch(err){
+
+console.error(err);
+res.send(err.message);
+
+}
+
+});
+
+/* ================================
+DATABASE CLEANUP (DEV ONLY)
+================================ */
+
+app.get("/cleanup-old-identifiers", async (req,res)=>{
+
+try{
+
+await pool.query(`
+DELETE FROM authors
+WHERE identifier LIKE 'RES-%'
+`);
+
+await pool.query(`
+DELETE FROM identifiers
+WHERE identifier LIKE 'RES-%'
+`);
+
+res.send("Old identifiers removed");
 
 }catch(err){
 
@@ -96,12 +126,12 @@ datasets and research publications.
 });
 
 /* ================================
-DATABASE UPDATE ROUTE
+DATABASE UPDATE (MIGRATION)
 ================================ */
 
 app.get("/update-db", async (req, res) => {
 
-try {
+try{
 
 /* AUTHORS */
 
@@ -141,7 +171,7 @@ ADD COLUMN IF NOT EXISTS number INTEGER DEFAULT 0
 
 res.send("Database updated successfully");
 
-}catch (err){
+}catch(err){
 
 console.error(err);
 res.send(err.message);
@@ -163,7 +193,7 @@ SERVER START
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, ()=>{
 
 console.log("Server running on port " + PORT);
 
