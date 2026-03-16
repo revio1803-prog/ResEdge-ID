@@ -39,9 +39,8 @@ router.post("/create-author", async (req,res)=>{
 
 try{
 
-const {name,institution} = req.body;
-
-/* generate identifier */
+const name = req.body.name;
+const institution = req.body.institution || "";
 
 const id = await generateIdentifier("author");
 
@@ -68,17 +67,7 @@ id.number,
 ]
 );
 
-res.send(layout("Author Created",`
-
-<h2>Author Created</h2>
-
-<p><b>${id.identifier}</b></p>
-
-<a href="/author/${id.identifier}">
-<button>Open Profile</button>
-</a>
-
-`));
+res.redirect(`/author/${id.identifier}`);
 
 }catch(err){
 
@@ -95,8 +84,6 @@ BROWSE AUTHORS
 
 router.get("/browse-authors", async (req,res)=>{
 
-try{
-
 const result = await pool.query(
 `SELECT * FROM authors ORDER BY created_at DESC`
 );
@@ -105,18 +92,18 @@ let rows="";
 
 result.rows.forEach(a=>{
 
-rows += `
+rows+=`
 <tr>
 <td>${a.identifier}</td>
 <td>${a.name}</td>
 <td>${a.institution || ""}</td>
-<td><a href="/author/${a.identifier}">Profile</a></td>
+<td><a href="/author/${a.identifier}">View</a></td>
 </tr>
 `;
 
 });
 
-res.send(layout("Author Registry",`
+res.send(layout("Authors",`
 
 <h2>Author Registry</h2>
 
@@ -126,7 +113,7 @@ res.send(layout("Author Registry",`
 <th>Identifier</th>
 <th>Name</th>
 <th>Institution</th>
-<th>Profile</th>
+<th>Link</th>
 </tr>
 
 ${rows}
@@ -134,13 +121,6 @@ ${rows}
 </table>
 
 `));
-
-}catch(err){
-
-console.error(err);
-res.send(err.message);
-
-}
 
 });
 
@@ -159,8 +139,8 @@ const result = await pool.query(
 [identifier]
 );
 
-if(result.rows.length === 0){
-return res.send(layout("Not Found","Author not found"));
+if(result.rows.length===0){
+return res.send("Author not found");
 }
 
 const a = result.rows[0];
