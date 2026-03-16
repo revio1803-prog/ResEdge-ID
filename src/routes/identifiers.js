@@ -55,7 +55,7 @@ if(data.type === "DATA"){
 autoTarget = "/dataset/" + identifier;
 }
 
-if(data.type === "PAPR"){
+if(data.type === "paper"){
 autoTarget = "/paper/" + identifier;
 }
 
@@ -152,7 +152,7 @@ if(data.type === "DATA"){
 autoTarget = "/dataset/" + identifier;
 }
 
-if(data.type === "PAPR"){
+if(data.type === "paper"){
 autoTarget = "/paper/" + identifier;
 }
 
