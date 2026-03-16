@@ -2,12 +2,18 @@ const pool = require("../config/db");
 
 async function generateIdentifier(type){
 
-let prefix = "10.1001";
-let code = "";
+try{
+
+const prefix = "10.1001";
+
+let code;
 
 if(type === "author") code = "AUTH";
-if(type === "dataset") code = "DATA";
-if(type === "paper") code = "PAPR";
+else if(type === "dataset") code = "DATA";
+else if(type === "paper") code = "PAPR";
+else throw new Error("Invalid identifier type");
+
+/* find last number */
 
 const result = await pool.query(
 `SELECT number FROM identifiers
@@ -23,15 +29,26 @@ if(result.rows.length > 0){
 nextNumber = result.rows[0].number + 1;
 }
 
-let numberStr = String(nextNumber).padStart(5,"0");
+/* format number */
 
-let identifier = `${prefix}/${code}${numberStr}`;
+const numberStr = String(nextNumber).padStart(5,"0");
+
+/* final identifier */
+
+const identifier = `${prefix}/${code}${numberStr}`;
 
 return {
-identifier,
-prefix,
+identifier: identifier,
+prefix: prefix,
 number: nextNumber
 };
+
+}catch(err){
+
+console.error("Identifier generation error:", err);
+throw err;
+
+}
 
 }
 
