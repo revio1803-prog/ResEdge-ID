@@ -5,7 +5,9 @@ const pool = require("../config/db");
 const layout = require("../views/layout");
 const generateIdentifier = require("../utils/idGenerator");
 
-/* CREATE AUTHOR PAGE */
+/* =========================
+CREATE AUTHOR PAGE
+========================= */
 
 router.get("/create-author",(req,res)=>{
 
@@ -30,7 +32,9 @@ Institution
 });
 
 
-/* CREATE AUTHOR */
+/* =========================
+CREATE AUTHOR
+========================= */
 
 router.post("/create-author", async (req,res)=>{
 
@@ -41,11 +45,15 @@ const institution = req.body.institution || "";
 
 const id = await generateIdentifier("author");
 
+/* insert author */
+
 await pool.query(
 `INSERT INTO authors (identifier,name,institution)
 VALUES ($1,$2,$3)`,
 [id.identifier,name,institution]
 );
+
+/* register identifier */
 
 await pool.query(
 `INSERT INTO identifiers
@@ -60,6 +68,8 @@ id.number,
 ]
 );
 
+/* redirect to profile */
+
 res.redirect(`/author/${id.identifier}`);
 
 }catch(err){
@@ -72,7 +82,9 @@ res.send(err.message);
 });
 
 
-/* AUTHOR PROFILE */
+/* =========================
+AUTHOR PROFILE
+========================= */
 
 router.get("/author/:identifier", async (req,res)=>{
 
@@ -96,7 +108,6 @@ res.send(layout("Author Profile",`
 <h2>${a.name}</h2>
 
 <p><b>Identifier:</b> ${a.identifier}</p>
-
 <p><b>Institution:</b> ${a.institution || ""}</p>
 
 `));
@@ -111,7 +122,9 @@ res.send(err.message);
 });
 
 
-/* BROWSE AUTHORS */
+/* =========================
+BROWSE AUTHORS
+========================= */
 
 router.get("/browse-authors", async (req,res)=>{
 
@@ -123,7 +136,7 @@ let rows="";
 
 result.rows.forEach(a=>{
 
-rows+=`
+rows += `
 <tr>
 <td>${a.identifier}</td>
 <td>${a.name}</td>
@@ -131,13 +144,6 @@ rows+=`
 <td><a href="/author/${a.identifier}">View</a></td>
 </tr>
 `;
-
-});
-app.get("/debug-authors", async (req,res)=>{
-
-const result = await pool.query("SELECT * FROM authors");
-
-res.json(result.rows);
 
 });
 
