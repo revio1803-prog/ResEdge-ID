@@ -42,7 +42,9 @@ router.post("/create-dataset", async (req,res)=>{
 
 try{
 
-const {title,publisher,year} = req.body;
+const title = req.body.title;
+const publisher = req.body.publisher || "";
+const year = req.body.year || "";
 
 /* generate identifier */
 
@@ -71,22 +73,28 @@ id.number,
 ]
 );
 
+/* success page */
+
 res.send(layout("Dataset Created",`
 
 <h2>Dataset Created</h2>
 
 <p><b>${id.identifier}</b></p>
 
-<a href="/dataset/${id.identifier}">
-<button>Open Dataset</button>
+<a class="btn" href="/dataset/${id.identifier}">
+Open Dataset
 </a>
 
 `));
 
 }catch(err){
 
-console.error(err);
-res.send(err.message);
+console.error("Dataset create error:",err);
+
+res.send(layout("Error",`
+<h2>Error creating dataset</h2>
+<p>${err.message}</p>
+`));
 
 }
 
@@ -104,7 +112,7 @@ const result = await pool.query(
 `SELECT * FROM datasets ORDER BY created_at DESC`
 );
 
-let rows="";
+let rows = "";
 
 result.rows.forEach(d=>{
 
