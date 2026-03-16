@@ -5,7 +5,9 @@ const pool = require("../config/db");
 const layout = require("../views/layout");
 const generateIdentifier = require("../utils/idGenerator");
 
-/* ---------- CREATE DATASET PAGE ---------- */
+/* =========================
+CREATE DATASET PAGE
+========================= */
 
 router.get("/create-dataset",(req,res)=>{
 
@@ -19,10 +21,10 @@ Title
 <input name="title" required>
 
 Publisher
-<input name="publisher" required>
+<input name="publisher">
 
 Year
-<input name="year" required>
+<input name="year">
 
 <button>Create Dataset Identifier</button>
 
@@ -32,7 +34,9 @@ Year
 
 });
 
-/* ---------- CREATE DATASET ---------- */
+/* =========================
+CREATE DATASET
+========================= */
 
 router.post("/create-dataset", async (req,res)=>{
 
@@ -69,7 +73,7 @@ id.number,
 
 res.send(layout("Dataset Created",`
 
-<h2>Dataset Registered</h2>
+<h2>Dataset Created</h2>
 
 <p><b>${id.identifier}</b></p>
 
@@ -82,18 +86,25 @@ res.send(layout("Dataset Created",`
 }catch(err){
 
 console.error(err);
-res.send("Error creating dataset");
+res.send(layout("Error",`
+<h2>Error creating dataset</h2>
+<p>${err.message}</p>
+`));
 
 }
 
 });
 
-/* ---------- BROWSE DATASETS ---------- */
+/* =========================
+BROWSE DATASETS
+========================= */
 
 router.get("/browse-datasets", async (req,res)=>{
 
+try{
+
 const result = await pool.query(
-"SELECT * FROM datasets ORDER BY identifier DESC"
+`SELECT * FROM datasets ORDER BY created_at DESC`
 );
 
 let rows="";
@@ -104,7 +115,7 @@ rows += `
 <tr>
 <td>${d.identifier}</td>
 <td>${d.title}</td>
-<td>${d.publisher}</td>
+<td>${d.publisher || ""}</td>
 <td><a href="/dataset/${d.identifier}">View</a></td>
 </tr>
 `;
@@ -130,24 +141,35 @@ ${rows}
 
 `));
 
+}catch(err){
+
+console.error(err);
+res.send(err.message);
+
+}
+
 });
 
-/* ---------- DATASET PAGE ---------- */
+/* =========================
+DATASET PAGE
+========================= */
 
 router.get("/dataset/:identifier", async (req,res)=>{
 
-const identifier = req.params.identifier;
+try{
 
-const dataset = await pool.query(
-"SELECT * FROM datasets WHERE identifier=$1",
+const {identifier} = req.params;
+
+const result = await pool.query(
+`SELECT * FROM datasets WHERE identifier=$1`,
 [identifier]
 );
 
-if(dataset.rows.length === 0){
+if(result.rows.length === 0){
 return res.send(layout("Not Found","Dataset not found"));
 }
 
-const d = dataset.rows[0];
+const d = result.rows[0];
 
 res.send(layout("Dataset Page",`
 
@@ -155,11 +177,18 @@ res.send(layout("Dataset Page",`
 
 <p><b>Identifier:</b> ${d.identifier}</p>
 
-<p><b>Publisher:</b> ${d.publisher}</p>
+<p><b>Publisher:</b> ${d.publisher || ""}</p>
 
-<p><b>Year:</b> ${d.year}</p>
+<p><b>Year:</b> ${d.year || ""}</p>
 
 `));
+
+}catch(err){
+
+console.error(err);
+res.send(err.message);
+
+}
 
 });
 
