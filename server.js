@@ -103,6 +103,11 @@ ALTER TABLE datasets
 ADD COLUMN IF NOT EXISTS publisher TEXT
 `);
 
+await pool.query(`
+ALTER TABLE datasets
+ADD COLUMN IF NOT EXISTS year TEXT
+`);
+
 /* IDENTIFIERS */
 
 await pool.query(`
