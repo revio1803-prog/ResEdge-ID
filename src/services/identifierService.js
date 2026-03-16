@@ -2,21 +2,34 @@ const pool = require("../config/db");
 
 async function generateIdentifier(type){
 
-let prefix = "10.1001";
-let code = "";
+const prefix = "10.1001";
 
-if(type === "author") code = "AUTH";
-if(type === "dataset") code = "DATA";
-if(type === "paper") code = "PAPR";
+/* VALID TYPES */
+
+const types = {
+AUTH: "AUTH",
+DATA: "DATA",
+PAPR: "PAPR"
+};
+
+if(!types[type]){
+throw new Error("Invalid identifier type");
+}
+
+const code = types[type];
+
+/* COUNT EXISTING */
 
 const result = await pool.query(
 `SELECT COUNT(*) FROM identifiers WHERE type=$1`,
-[type]
+[code]
 );
 
 let number = parseInt(result.rows[0].count) + 1;
 
 let numberStr = String(number).padStart(5,"0");
+
+/* FINAL IDENTIFIER */
 
 let identifier = `${prefix}/${code}${numberStr}`;
 
