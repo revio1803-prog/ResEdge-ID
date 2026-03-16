@@ -86,10 +86,7 @@ res.send(layout("Dataset Created",`
 }catch(err){
 
 console.error(err);
-res.send(layout("Error",`
-<h2>Error creating dataset</h2>
-<p>${err.message}</p>
-`));
+res.send(err.message);
 
 }
 
