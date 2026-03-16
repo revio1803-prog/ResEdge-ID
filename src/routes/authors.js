@@ -83,10 +83,7 @@ res.send(layout("Author Created",`
 }catch(err){
 
 console.error(err);
-res.send(layout("Error",`
-<h2>Error creating author</h2>
-<p>${err.message}</p>
-`));
+res.send(err.message);
 
 }
 
