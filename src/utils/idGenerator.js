@@ -20,7 +20,7 @@ const result = await pool.query(
 WHERE type=$1
 ORDER BY number DESC
 LIMIT 1`,
-[type]
+[code]
 );
 
 let nextNumber = 1;
@@ -40,7 +40,8 @@ const identifier = `${prefix}/${code}${numberStr}`;
 return {
 identifier: identifier,
 prefix: prefix,
-number: nextNumber
+number: nextNumber,
+type: code
 };
 
 }catch(err){
