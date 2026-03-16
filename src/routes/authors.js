@@ -85,7 +85,7 @@ const result = await pool.query(
 [identifier]
 );
 
-if(result.rows.length===0){
+if(result.rows.length === 0){
 return res.send("Author not found");
 }
 
