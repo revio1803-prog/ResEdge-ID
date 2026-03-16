@@ -14,10 +14,14 @@ try{
 
 let {identifier} = req.params;
 
-identifier = identifier.trim().toUpperCase();
+/* normalize */
+
+identifier = identifier.trim();
+
+/* lookup */
 
 const result = await pool.query(
-"SELECT * FROM identifiers WHERE identifier=$1",
+`SELECT * FROM identifiers WHERE identifier=$1`,
 [identifier]
 );
 
@@ -26,13 +30,15 @@ if(result.rows.length === 0){
 return res.send(layout(
 "Identifier Not Found",
 `
+
 <h2>Identifier Not Found</h2>
 
 <p>
-The requested identifier <b>${identifier}</b> does not exist in this registry.
+The identifier <b>${identifier}</b> does not exist.
 </p>
 
 <a class="btn" href="/">Back to Home</a>
+
 `
 ));
 
@@ -41,7 +47,7 @@ The requested identifier <b>${identifier}</b> does not exist in this registry.
 const data = result.rows[0];
 
 res.send(layout(
-"Identifier "+identifier,
+`Identifier ${identifier}`,
 `
 
 <h2>Identifier Landing Page</h2>
@@ -70,7 +76,7 @@ res.send(layout(
 
 <tr>
 <td>Created</td>
-<td>${data.created_at || ""}</td>
+<td>${data.created_at}</td>
 </tr>
 
 </table>
@@ -88,9 +94,47 @@ Open Resource
 
 }catch(err){
 
-console.error("Identifier resolver error:",err);
+console.error("Resolver error:",err);
 
-res.status(500).send("Server Error");
+res.status(500).send("Server error");
+
+}
+
+});
+
+
+/* ===============================
+IDENTIFIER REDIRECT
+=============================== */
+
+router.get("/resolve/:identifier", async (req,res)=>{
+
+try{
+
+let {identifier} = req.params;
+
+const result = await pool.query(
+`SELECT * FROM identifiers WHERE identifier=$1`,
+[identifier]
+);
+
+if(result.rows.length === 0){
+return res.status(404).send("Identifier not found");
+}
+
+const data = result.rows[0];
+
+if(!data.target_url){
+return res.send("Target URL missing");
+}
+
+res.redirect(data.target_url);
+
+}catch(err){
+
+console.error(err);
+
+res.status(500).send("Resolver error");
 
 }
 
@@ -107,10 +151,8 @@ try{
 
 let {identifier} = req.params;
 
-identifier = identifier.trim().toUpperCase();
-
 const result = await pool.query(
-"SELECT * FROM identifiers WHERE identifier=$1",
+`SELECT * FROM identifiers WHERE identifier=$1`,
 [identifier]
 );
 
@@ -125,11 +167,15 @@ error:"Identifier not found"
 const data = result.rows[0];
 
 res.json({
+
 identifier: data.identifier,
 type: data.type,
+prefix: data.prefix || "",
+number: data.number || "",
 target_url: data.target_url,
 metadata: data.metadata || {},
 created_at: data.created_at
+
 });
 
 }catch(err){
@@ -143,6 +189,5 @@ error:"Server error"
 }
 
 });
-
 
 module.exports = router;
