@@ -3,18 +3,18 @@ require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 
+const app = express();
+
 /* DATABASE */
 
 const pool = require("./src/config/db");
 
 /* ROUTES */
 
-app.use("/", authorsRoutes);
-app.use("/", datasetsRoutes);
-app.use("/", apiRoutes);
-
-/* identifiers LAST me */
-app.use("/", identifiersRoutes);
+const authorsRoutes = require("./src/routes/authors");
+const datasetsRoutes = require("./src/routes/datasets");
+const identifiersRoutes = require("./src/routes/identifiers");
+const apiRoutes = require("./src/routes/api");
 
 /* MIDDLEWARE */
 
@@ -22,8 +22,6 @@ const errorHandler = require("./src/middleware/errorHandler");
 const notFound = require("./src/middleware/notFound");
 
 const layout = require("./src/views/layout");
-
-const app = express();
 
 /* ================================
 MIDDLEWARE
@@ -34,19 +32,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 /* ================================
-ROUTES (IMPORTANT ORDER)
+ROUTES (ORDER IMPORTANT)
 ================================ */
 
 app.use("/", authorsRoutes);
 app.use("/", datasetsRoutes);
 app.use("/", apiRoutes);
 
-/* identifier resolver last */
+/* identifier resolver LAST */
 
 app.use("/", identifiersRoutes);
 
 /* ================================
-DEBUG ROUTES
+DEBUG ROUTE
 ================================ */
 
 app.get("/debug-authors", async (req,res)=>{
@@ -67,7 +65,7 @@ res.send(err.message);
 });
 
 /* ================================
-DATABASE CLEANUP (DEV ONLY)
+DATABASE CLEANUP
 ================================ */
 
 app.get("/cleanup-old-identifiers", async (req,res)=>{
@@ -99,7 +97,7 @@ res.send(err.message);
 HOME PAGE
 ================================ */
 
-app.get("/", (req, res) => {
+app.get("/", (req,res)=>{
 
 res.send(layout(
 "Research Edge Identifier",
@@ -128,21 +126,17 @@ datasets and research publications.
 });
 
 /* ================================
-DATABASE UPDATE (MIGRATION)
+DATABASE UPDATE
 ================================ */
 
-app.get("/update-db", async (req, res) => {
+app.get("/update-db", async (req,res)=>{
 
 try{
-
-/* AUTHORS */
 
 await pool.query(`
 ALTER TABLE authors
 ADD COLUMN IF NOT EXISTS identifier TEXT
 `);
-
-/* DATASETS */
 
 await pool.query(`
 ALTER TABLE datasets
@@ -158,8 +152,6 @@ await pool.query(`
 ALTER TABLE datasets
 ADD COLUMN IF NOT EXISTS year TEXT
 `);
-
-/* IDENTIFIERS */
 
 await pool.query(`
 ALTER TABLE identifiers
