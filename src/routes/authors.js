@@ -133,6 +133,13 @@ rows+=`
 `;
 
 });
+app.get("/debug-authors", async (req,res)=>{
+
+const result = await pool.query("SELECT * FROM authors");
+
+res.json(result.rows);
+
+});
 
 res.send(layout("Authors",`
 
