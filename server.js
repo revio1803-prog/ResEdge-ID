@@ -77,12 +77,28 @@ datasets and research publications.
 });
 
 /* ================================
-DATABASE UPDATE ROUTE (PHASE-2)
+DATABASE UPDATE ROUTE
 ================================ */
 
 app.get("/update-db", async (req, res) => {
 
 try {
+
+/* AUTHORS */
+
+await pool.query(`
+ALTER TABLE authors
+ADD COLUMN IF NOT EXISTS identifier TEXT
+`);
+
+/* DATASETS */
+
+await pool.query(`
+ALTER TABLE datasets
+ADD COLUMN IF NOT EXISTS identifier TEXT
+`);
+
+/* IDENTIFIERS */
 
 await pool.query(`
 ALTER TABLE identifiers
@@ -96,7 +112,7 @@ ADD COLUMN IF NOT EXISTS number INTEGER DEFAULT 0
 
 res.send("Database updated successfully");
 
-} catch (err) {
+}catch (err){
 
 console.error(err);
 res.send("Database update failed");
