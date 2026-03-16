@@ -10,7 +10,7 @@ let code;
 
 if(type === "author") code = "AUTH";
 else if(type === "dataset") code = "DATA";
-else if(type === "paper") code = "PAPR";
+else if(type === "paper") code = "paper";
 else throw new Error("Invalid identifier type");
 
 /* find last number */
