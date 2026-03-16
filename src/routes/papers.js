@@ -81,7 +81,7 @@ return res.send(layout("Error","Title and Authors required"));
 
 /* GENERATE IDENTIFIER */
 
-const identifier = await generateIdentifier("PAPR");
+const identifier = await generateIdentifier("paper");
 
 /* INSERT PAPER */
 
@@ -97,7 +97,12 @@ VALUES ($1,$2,$3,$4,$5,$6,$7)`,
 
 /* REGISTER IDENTIFIER */
 
-await identifierService.register(identifier,"PAPR");
+await identifierService.register(
+idData.identifier,
+idData.type,
+idData.prefix,
+idData.number
+);
 
 /* SUCCESS */
 
