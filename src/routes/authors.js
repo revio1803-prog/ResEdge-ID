@@ -5,187 +5,31 @@ const pool = require("../config/db");
 const layout = require("../views/layout");
 const generateIdentifier = require("../utils/idGenerator");
 
-/* ===============================
-BROWSE AUTHORS
-=============================== */
+/* ---------- CREATE AUTHOR PAGE ---------- */
 
-router.get("/browse-authors", async (req,res)=>{
+router.get("/create-author", (req,res)=>{
 
-try{
+res.send(layout("Create Author",`
 
-const result = await pool.query(
-"SELECT * FROM authors ORDER BY id DESC LIMIT 50"
-);
-
-let rows="";
-
-if(result.rows.length === 0){
-
-rows = `
-<tr>
-<td colspan="4">No authors registered yet</td>
-</tr>
-`;
-
-}else{
-
-result.rows.forEach(a=>{
-
-rows += `
-<tr>
-<td>${a.id}</td>
-<td>${a.name || ""}</td>
-<td>${a.institution || ""}</td>
-<td>
-<a href="/author/${a.identifier}">
-${a.identifier || ""}
-</a>
-</td>
-</tr>
-`;
-
-});
-
-}
-
-res.send(layout(
-"Authors",
-`
-<h2>Registered Authors</h2>
-
-<a class="btn" href="/create-author">Create Author</a>
-
-<table>
-
-<tr>
-<th>ID</th>
-<th>Name</th>
-<th>Institution</th>
-<th>Identifier</th>
-</tr>
-
-${rows}
-
-</table>
-`
-));
-
-}catch(err){
-
-console.error("Browse authors error:",err);
-res.status(500).send("Server Error");
-
-}
-
-});
-
-
-/* ===============================
-AUTHOR PROFILE PAGE
-=============================== */
-
-router.get("/author/:identifier", async (req,res)=>{
-
-try{
-
-const {identifier} = req.params;
-
-const result = await pool.query(
-"SELECT * FROM authors WHERE identifier=$1",
-[identifier]
-);
-
-if(result.rows.length === 0){
-
-return res.send(layout(
-"Author",
-`
-<h2>Author Not Found</h2>
-
-<p>No author exists with identifier <b>${identifier}</b></p>
-`
-));
-
-}
-
-const a = result.rows[0];
-
-res.send(layout(
-"Author "+a.name,
-`
-
-<h2>Author Profile</h2>
-
-<table>
-
-<tr>
-<th>Field</th>
-<th>Value</th>
-</tr>
-
-<tr>
-<td>Name</td>
-<td>${a.name}</td>
-</tr>
-
-<tr>
-<td>Institution</td>
-<td>${a.institution || ""}</td>
-</tr>
-
-<tr>
-<td>Identifier</td>
-<td>${a.identifier}</td>
-</tr>
-
-</table>
-
-`
-));
-
-}catch(err){
-
-console.error(err);
-res.status(500).send("Server Error");
-
-}
-
-});
-
-
-/* ===============================
-CREATE AUTHOR FORM
-=============================== */
-
-router.get("/create-author",(req,res)=>{
-
-res.send(layout(
-"Create Author",
-`
-<h2>Create Author</h2>
+<h2>Create Author Profile</h2>
 
 <form method="POST" action="/create-author">
 
-<label>Name</label>
+Name
 <input name="name" required>
 
-<label>Institution</label>
-<input name="institution">
+Institution
+<input name="institution" required>
 
-<br>
-
-<button class="btn">Create Author</button>
+<button>Create Author Identifier</button>
 
 </form>
-`
-));
+
+`));
 
 });
 
-
-/* ===============================
-CREATE AUTHOR POST
-=============================== */
+/* ---------- CREATE AUTHOR ---------- */
 
 router.post("/create-author", async (req,res)=>{
 
@@ -193,48 +37,125 @@ try{
 
 const {name,institution} = req.body;
 
-if(!name){
-return res.status(400).send("Name is required");
-}
+/* generate identifier */
 
-const insert = await pool.query(
-"INSERT INTO authors(name,institution) VALUES($1,$2) RETURNING id",
-[name,institution]
-);
+const id = await generateIdentifier("author");
 
-const id = insert.rows[0].id;
-
-const identifier = generateIdentifier("author",id);
-
-/* update author */
+/* insert author */
 
 await pool.query(
-"UPDATE authors SET identifier=$1 WHERE id=$2",
-[identifier,id]
+`INSERT INTO authors (identifier,name,institution)
+VALUES ($1,$2,$3)`,
+[id.identifier,name,institution]
 );
 
-/* store identifier record */
+/* register identifier */
 
 await pool.query(
-`INSERT INTO identifiers(identifier,type,target_url)
-VALUES($1,$2,$3)`,
+`INSERT INTO identifiers
+(identifier,prefix,type,number,target_url)
+VALUES ($1,$2,$3,$4,$5)`,
 [
-identifier,
+id.identifier,
+id.prefix,
 "author",
-"/author/"+identifier
+id.number,
+`/author/${id.identifier}`
 ]
 );
 
-res.redirect("/browse-authors");
+res.send(layout("Author Created",`
+
+<h2>Author Created</h2>
+
+<p><b>${id.identifier}</b></p>
+
+<a href="/author/${id.identifier}">
+<button>Open Profile</button>
+</a>
+
+`));
 
 }catch(err){
 
-console.error("Create author error:",err);
-res.status(500).send("Server Error");
+console.error(err);
+res.send("Error creating author");
 
 }
 
 });
 
+/* ---------- BROWSE AUTHORS ---------- */
+
+router.get("/browse-authors", async (req,res)=>{
+
+const result = await pool.query(
+"SELECT * FROM authors ORDER BY identifier DESC"
+);
+
+let rows="";
+
+result.rows.forEach(a=>{
+
+rows += `
+<tr>
+<td>${a.identifier}</td>
+<td>${a.name}</td>
+<td>${a.institution}</td>
+<td><a href="/author/${a.identifier}">Profile</a></td>
+</tr>
+`;
+
+});
+
+res.send(layout("Author Registry",`
+
+<h2>Author Registry</h2>
+
+<table>
+
+<tr>
+<th>Identifier</th>
+<th>Name</th>
+<th>Institution</th>
+<th>Profile</th>
+</tr>
+
+${rows}
+
+</table>
+
+`));
+
+});
+
+/* ---------- AUTHOR PROFILE ---------- */
+
+router.get("/author/:identifier", async (req,res)=>{
+
+const identifier = req.params.identifier;
+
+const author = await pool.query(
+"SELECT * FROM authors WHERE identifier=$1",
+[identifier]
+);
+
+if(author.rows.length === 0){
+return res.send(layout("Not Found","Author not found"));
+}
+
+const a = author.rows[0];
+
+res.send(layout("Author Profile",`
+
+<h2>${a.name}</h2>
+
+<p><b>Identifier:</b> ${a.identifier}</p>
+
+<p><b>Institution:</b> ${a.institution}</p>
+
+`));
+
+});
 
 module.exports = router;
