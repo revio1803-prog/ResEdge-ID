@@ -13,9 +13,6 @@ router.get("/id/:identifier", async (req,res)=>{
 try{
 
 let {identifier} = req.params;
-
-/* normalize */
-
 identifier = identifier.trim();
 
 /* lookup */
@@ -33,9 +30,7 @@ return res.send(layout(
 
 <h2>Identifier Not Found</h2>
 
-<p>
-The identifier <b>${identifier}</b> does not exist.
-</p>
+<p>The identifier <b>${identifier}</b> does not exist.</p>
 
 <a class="btn" href="/">Back to Home</a>
 
@@ -45,6 +40,28 @@ The identifier <b>${identifier}</b> does not exist.
 }
 
 const data = result.rows[0];
+
+/* ===============================
+AUTO TARGET URL BY TYPE
+=============================== */
+
+let autoTarget = null;
+
+if(data.type === "AUTH"){
+autoTarget = "/author/" + identifier;
+}
+
+if(data.type === "DATA"){
+autoTarget = "/dataset/" + identifier;
+}
+
+if(data.type === "PAPR"){
+autoTarget = "/paper/" + identifier;
+}
+
+/* priority: manual target_url */
+
+const target = data.target_url || autoTarget;
 
 res.send(layout(
 `Identifier ${identifier}`,
@@ -71,7 +88,7 @@ res.send(layout(
 
 <tr>
 <td>Target Resource</td>
-<td>${data.target_url || ""}</td>
+<td>${target || ""}</td>
 </tr>
 
 <tr>
@@ -83,8 +100,8 @@ res.send(layout(
 
 <br>
 
-${data.target_url ? `
-<a class="btn" href="${data.target_url}">
+${target ? `
+<a class="btn" href="${target}">
 Open Resource
 </a>
 ` : ""}
@@ -95,7 +112,6 @@ Open Resource
 }catch(err){
 
 console.error("Resolver error:",err);
-
 res.status(500).send("Server error");
 
 }
@@ -124,16 +140,33 @@ return res.status(404).send("Identifier not found");
 
 const data = result.rows[0];
 
-if(!data.target_url){
+/* auto redirect */
+
+let autoTarget = null;
+
+if(data.type === "AUTH"){
+autoTarget = "/author/" + identifier;
+}
+
+if(data.type === "DATA"){
+autoTarget = "/dataset/" + identifier;
+}
+
+if(data.type === "PAPR"){
+autoTarget = "/paper/" + identifier;
+}
+
+const target = data.target_url || autoTarget;
+
+if(!target){
 return res.send("Target URL missing");
 }
 
-res.redirect(data.target_url);
+res.redirect(target);
 
 }catch(err){
 
 console.error(err);
-
 res.status(500).send("Resolver error");
 
 }
