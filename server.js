@@ -9,10 +9,12 @@ const pool = require("./src/config/db");
 
 /* ROUTES */
 
-const authorsRoutes = require("./src/routes/authors");
-const datasetsRoutes = require("./src/routes/datasets");
-const identifiersRoutes = require("./src/routes/identifiers");
-const apiRoutes = require("./src/routes/api");
+app.use("/", authorsRoutes);
+app.use("/", datasetsRoutes);
+app.use("/", apiRoutes);
+
+/* identifiers LAST me */
+app.use("/", identifiersRoutes);
 
 /* MIDDLEWARE */
 
