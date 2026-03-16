@@ -98,6 +98,11 @@ ALTER TABLE datasets
 ADD COLUMN IF NOT EXISTS identifier TEXT
 `);
 
+await pool.query(`
+ALTER TABLE datasets
+ADD COLUMN IF NOT EXISTS publisher TEXT
+`);
+
 /* IDENTIFIERS */
 
 await pool.query(`
@@ -115,7 +120,7 @@ res.send("Database updated successfully");
 }catch (err){
 
 console.error(err);
-res.send("Database update failed");
+res.send(err.message);
 
 }
 
