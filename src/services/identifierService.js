@@ -4,36 +4,45 @@ async function generateIdentifier(type){
 
 const prefix = "10.1001";
 
-/* VALID TYPES */
+/* TYPE MAPPING */
 
-const types = {
-AUTH: "AUTH",
-DATA: "DATA",
-paper: "paper"
-};
+let code;
 
-if(!types[type]){
-throw new Error("Invalid identifier type");
-}
+if(type === "author") code = "AUTH";
+else if(type === "dataset") code = "DATA";
+else if(type === "paper") code = "PAPR";
+else throw new Error("Invalid identifier type");
 
-const code = types[type];
-
-/* COUNT EXISTING */
+/* FIND LAST NUMBER */
 
 const result = await pool.query(
-`SELECT COUNT(*) FROM identifiers WHERE type=$1`,
+`SELECT number FROM identifiers
+WHERE type=$1
+ORDER BY number DESC
+LIMIT 1`,
 [code]
 );
 
-let number = parseInt(result.rows[0].count) + 1;
+let nextNumber = 1;
 
-let numberStr = String(number).padStart(5,"0");
+if(result.rows.length > 0){
+nextNumber = result.rows[0].number + 1;
+}
+
+/* FORMAT NUMBER */
+
+const numberStr = String(nextNumber).padStart(5,"0");
 
 /* FINAL IDENTIFIER */
 
-let identifier = `${prefix}/${code}${numberStr}`;
+const identifier = `${prefix}/${code}${numberStr}`;
 
-return identifier;
+return {
+identifier: identifier,
+prefix: prefix,
+number: nextNumber,
+type: code
+};
 
 }
 
