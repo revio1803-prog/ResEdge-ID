@@ -13,8 +13,9 @@ const pool = require("./src/config/db");
 
 const authorsRoutes = require("./src/routes/authors");
 const datasetsRoutes = require("./src/routes/datasets");
-const identifiersRoutes = require("./src/routes/identifiers");
+const papersRoutes = require("./src/routes/papers");
 const apiRoutes = require("./src/routes/api");
+const identifiersRoutes = require("./src/routes/identifiers");
 
 /* MIDDLEWARE */
 
@@ -37,6 +38,7 @@ ROUTES (ORDER IMPORTANT)
 
 app.use("/", authorsRoutes);
 app.use("/", datasetsRoutes);
+app.use("/", papersRoutes);
 app.use("/", apiRoutes);
 
 /* identifier resolver LAST */
@@ -114,11 +116,13 @@ datasets and research publications.
 
 <a class="btn" href="/browse-authors">Browse Authors</a>
 <a class="btn" href="/browse-datasets">Browse Datasets</a>
+<a class="btn" href="/browse-papers">Browse Papers</a>
 
 <br><br>
 
 <a class="btn" href="/create-author">Create Author</a>
 <a class="btn" href="/create-dataset">Create Dataset</a>
+<a class="btn" href="/create-paper">Create Paper</a>
 
 `
 ));
@@ -161,6 +165,27 @@ ADD COLUMN IF NOT EXISTS prefix TEXT DEFAULT '10.1001'
 await pool.query(`
 ALTER TABLE identifiers
 ADD COLUMN IF NOT EXISTS number INTEGER DEFAULT 0
+`);
+
+/* PAPERS TABLE */
+
+await pool.query(`
+CREATE TABLE IF NOT EXISTS papers (
+
+id SERIAL PRIMARY KEY,
+
+title TEXT NOT NULL,
+authors TEXT NOT NULL,
+journal TEXT,
+year INT,
+doi TEXT,
+url TEXT,
+
+identifier VARCHAR(50) UNIQUE,
+
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+)
 `);
 
 res.send("Database updated successfully");
