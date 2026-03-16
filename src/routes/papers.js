@@ -74,25 +74,21 @@ const {title,authors,journal,year,doi,url} = req.body;
 /* VALIDATION */
 
 if(!title || !authors){
-
 return res.send(layout("Error","Title and Authors required"));
-
 }
 
 /* GENERATE IDENTIFIER */
 
-const identifier = await generateIdentifier("paper");
+const idData = await generateIdentifier("paper");
+const identifier = idData.identifier;
 
 /* INSERT PAPER */
 
 await pool.query(
-
 `INSERT INTO papers
 (title,authors,journal,year,doi,url,identifier)
 VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-
 [title,authors,journal,year,doi,url,identifier]
-
 );
 
 /* REGISTER IDENTIFIER */
@@ -135,12 +131,13 @@ res.send(layout(
 "Error",
 `
 <h2>Paper registration failed</h2>
-
 <p>${err.message}</p>
 `
 ));
 
-};
+}
+
+});
 
 
 /* ===============================
@@ -154,16 +151,12 @@ try{
 const {identifier} = req.params;
 
 const result = await pool.query(
-
 "SELECT * FROM papers WHERE identifier=$1",
 [identifier]
-
 );
 
 if(result.rows.length===0){
-
 return res.send(layout("Not Found","Paper not found"));
-
 }
 
 const p = result.rows[0];
@@ -202,7 +195,6 @@ ${escapeHTML(p.url)}
 }catch(err){
 
 console.error(err);
-
 res.send(layout("Error","Unable to load paper"));
 
 }
@@ -219,9 +211,7 @@ router.get("/browse-papers", async (req,res)=>{
 try{
 
 const result = await pool.query(
-
 "SELECT * FROM papers ORDER BY id DESC LIMIT 100"
-
 );
 
 let rows="";
@@ -229,25 +219,13 @@ let rows="";
 result.rows.forEach(p=>{
 
 rows += `
-
 <tr>
-
 <td>${escapeHTML(p.identifier)}</td>
-
 <td>${escapeHTML(p.title)}</td>
-
 <td>${escapeHTML(p.journal)}</td>
-
 <td>${escapeHTML(p.year)}</td>
-
-<td>
-<a href="/paper/${p.identifier}">
-View
-</a>
-</td>
-
+<td><a href="/paper/${p.identifier}">View</a></td>
 </tr>
-
 `;
 
 });
@@ -278,12 +256,10 @@ ${rows}
 }catch(err){
 
 console.error(err);
-
 res.send(layout("Error","Unable to load papers"));
 
 }
 
 });
-
 
 module.exports = router;
